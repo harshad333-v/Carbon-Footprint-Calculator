@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carbon Footprint Calculator</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <span class="leaf-icon">🌿</span>
+      <h1>Carbon Footprint Calculator</h1>
+      <p class="tagline">Understand your environmental impact and find ways to reduce it</p>
+    </div>
+  </header>
+
+  <main>
+    <form id="calculator-form" novalidate>
+
+      <!-- ── Transportation ─────────────────────────────── -->
+      <section class="card" id="section-transport">
+        <h2><span class="section-icon">🚗</span> Transportation</h2>
+
+        <div class="field-group">
+          <div class="field">
+            <label for="car_miles_per_month">Miles driven per month</label>
+            <input type="number" id="car_miles_per_month" name="car_miles_per_month"
+                   min="0" placeholder="e.g. 1000" value="0" />
+          </div>
+          <div class="field">
+            <label for="car_mpg">Vehicle fuel efficiency (MPG)</label>
+            <input type="number" id="car_mpg" name="car_mpg"
+                   min="1" placeholder="e.g. 30" value="25" />
+          </div>
+          <div class="field">
+            <label for="car_fuel_type">Fuel type</label>
+            <select id="car_fuel_type" name="car_fuel_type">
+              <option value="gasoline" selected>Gasoline / Petrol</option>
+              <option value="diesel">Diesel</option>
+              <option value="electric">Electric (zero direct emissions)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="field">
+            <label for="flight_short_km_per_year">Short-haul flight distance / year (km)</label>
+            <input type="number" id="flight_short_km_per_year" name="flight_short_km_per_year"
+                   min="0" placeholder="e.g. 2000" value="0" />
+            <small>Flights under ~3 hours</small>
+          </div>
+          <div class="field">
+            <label for="flight_long_km_per_year">Long-haul flight distance / year (km)</label>
+            <input type="number" id="flight_long_km_per_year" name="flight_long_km_per_year"
+                   min="0" placeholder="e.g. 10000" value="0" />
+            <small>Flights 3+ hours</small>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="field">
+            <label for="bus_km_per_month">Bus travel per month (km)</label>
+            <input type="number" id="bus_km_per_month" name="bus_km_per_month"
+                   min="0" placeholder="e.g. 100" value="0" />
+          </div>
+          <div class="field">
+            <label for="train_km_per_month">Train travel per month (km)</label>
+            <input type="number" id="train_km_per_month" name="train_km_per_month"
+                   min="0" placeholder="e.g. 200" value="0" />
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Home Energy ─────────────────────────────────── -->
+      <section class="card" id="section-energy">
+        <h2><span class="section-icon">🏠</span> Home Energy</h2>
+
+        <div class="field-group">
+          <div class="field">
+            <label for="electricity_kwh_per_month">Electricity usage per month (kWh)</label>
+            <input type="number" id="electricity_kwh_per_month" name="electricity_kwh_per_month"
+                   min="0" placeholder="e.g. 500" value="0" />
+            <small>Check your electricity bill</small>
+          </div>
+          <div class="field">
+            <label for="natural_gas_therms_per_month">Natural gas per month (therms)</label>
+            <input type="number" id="natural_gas_therms_per_month" name="natural_gas_therms_per_month"
+                   min="0" placeholder="e.g. 50" value="0" />
+          </div>
+          <div class="field">
+            <label for="heating_oil_gallons_per_month">Heating oil per month (gallons)</label>
+            <input type="number" id="heating_oil_gallons_per_month" name="heating_oil_gallons_per_month"
+                   min="0" placeholder="e.g. 20" value="0" />
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Diet ──────────────────────────────────────────── -->
+      <section class="card" id="section-diet">
+        <h2><span class="section-icon">🥗</span> Diet</h2>
+
+        <div class="diet-options">
+          <label class="diet-card">
+            <input type="radio" name="diet_type" value="high_meat" />
+            <span class="diet-label">
+              <span class="diet-icon">🥩</span>
+              <strong>High Meat</strong>
+              <small>&gt;100g meat/day</small>
+            </span>
+          </label>
+          <label class="diet-card">
+            <input type="radio" name="diet_type" value="medium_meat" checked />
+            <span class="diet-label">
+              <span class="diet-icon">🍖</span>
+              <strong>Medium Meat</strong>
+              <small>50–100g meat/day</small>
+            </span>
+          </label>
+          <label class="diet-card">
+            <input type="radio" name="diet_type" value="low_meat" />
+            <span class="diet-label">
+              <span class="diet-icon">🥦</span>
+              <strong>Low Meat</strong>
+              <small>&lt;50g meat/day</small>
+            </span>
+          </label>
+          <label class="diet-card">
+            <input type="radio" name="diet_type" value="vegetarian" />
+            <span class="diet-label">
+              <span class="diet-icon">🥕</span>
+              <strong>Vegetarian</strong>
+              <small>No meat</small>
+            </span>
+          </label>
+          <label class="diet-card">
+            <input type="radio" name="diet_type" value="vegan" />
+            <span class="diet-label">
+              <span class="diet-icon">🌱</span>
+              <strong>Vegan</strong>
+              <small>No animal products</small>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <!-- ── Shopping ──────────────────────────────────────── -->
+      <section class="card" id="section-shopping">
+        <h2><span class="section-icon">🛍️</span> Shopping &amp; Consumption</h2>
+
+        <div class="field-group">
+          <div class="field">
+            <label for="monthly_spend_usd">Monthly spend on consumer goods (USD)</label>
+            <input type="number" id="monthly_spend_usd" name="monthly_spend_usd"
+                   min="0" placeholder="e.g. 300" value="0" />
+            <small>Clothing, electronics, household items, etc. (exclude food &amp; utilities)</small>
+          </div>
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-calculate">Calculate My Footprint</button>
+      </div>
+    </form>
+
+    <!-- ── Results ─────────────────────────────────────────── -->
+    <section id="results" class="card results-card hidden">
+      <h2>Your Carbon Footprint</h2>
+
+      <div class="results-headline">
+        <span id="annual-tonnes" class="big-number">0</span>
+        <span class="big-number-unit">tonnes CO₂e / year</span>
+      </div>
+
+      <div class="comparison-bar">
+        <div class="bar-label">Global average: <strong>4.7 t</strong></div>
+        <div class="bar-track">
+          <div id="your-bar" class="bar-fill your-bar"></div>
+          <div class="bar-fill avg-bar" style="width: 47%"></div>
+        </div>
+        <div class="bar-legend">
+          <span class="legend-dot your-dot"></span> You &nbsp;
+          <span class="legend-dot avg-dot"></span> Global average
+        </div>
+      </div>
+
+      <div class="breakdown-grid">
+        <div class="breakdown-item" id="bd-transport">
+          <span class="bd-icon">🚗</span>
+          <strong class="bd-label">Transportation</strong>
+          <span class="bd-value" id="bd-transport-val">—</span>
+          <div class="bd-bar-track"><div class="bd-bar" id="bd-transport-bar"></div></div>
+        </div>
+        <div class="breakdown-item" id="bd-energy">
+          <span class="bd-icon">🏠</span>
+          <strong class="bd-label">Home Energy</strong>
+          <span class="bd-value" id="bd-energy-val">—</span>
+          <div class="bd-bar-track"><div class="bd-bar" id="bd-energy-bar"></div></div>
+        </div>
+        <div class="breakdown-item" id="bd-diet">
+          <span class="bd-icon">🥗</span>
+          <strong class="bd-label">Diet</strong>
+          <span class="bd-value" id="bd-diet-val">—</span>
+          <div class="bd-bar-track"><div class="bd-bar" id="bd-diet-bar"></div></div>
+        </div>
+        <div class="breakdown-item" id="bd-shopping">
+          <span class="bd-icon">🛍️</span>
+          <strong class="bd-label">Shopping</strong>
+          <span class="bd-value" id="bd-shopping-val">—</span>
+          <div class="bd-bar-track"><div class="bd-bar" id="bd-shopping-bar"></div></div>
+        </div>
+      </div>
+
+      <div class="tips-box" id="tips-box">
+        <h3>💡 Tips to Reduce Your Footprint</h3>
+        <ul id="tips-list"></ul>
+      </div>
+
+      <button class="btn-recalculate" onclick="resetForm()">Recalculate</button>
+    </section>
+  </main>
+
+  <footer>
+    <p>Emission factors based on US EPA, IPCC, and DEFRA data. Results are estimates.</p>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/calculator.js') }}"></script>
+</body>
+</html>
