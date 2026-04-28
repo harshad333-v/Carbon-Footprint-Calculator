@@ -1,135 +1,175 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, render_template, request, jsonify
 import random
-
 import os
+
 app = Flask(__name__)
 
+# Monthly global average CO₂ per person (~4 tonnes/year)
+GLOBAL_AVG_MONTHLY = 333.0
 
-# 🔹 Smart Tips System
-def get_smart_tips(travel, electricity, transport, diet, footprint):
+# Trees needed: 1 tree absorbs ~22 kg CO₂/year → ~1.833 kg/month (rounded to 3 d.p.)
+TREE_ABSORPTION_MONTHLY = 22 / 12
 
+
+def get_smart_tips(travel, electricity, transport, diet, waste, water, footprint):
     tips = []
 
-    # Level-based tips
     if footprint > 150:
-        tips.append("⚠️ High carbon footprint. Reduce energy usage.")
+        tips.append("🚨 Very high footprint! Urgent lifestyle changes are needed.")
     elif footprint > 50:
-        tips.append("⚠️ Improve daily habits to reduce emissions.")
+        tips.append("⚠️ Moderate footprint. Small daily changes make a big difference.")
     else:
-        tips.append("🌱 Great eco-friendly lifestyle!")
+        tips.append("🌱 Excellent! You have an eco-friendly lifestyle — keep it up!")
 
-    # Transport-specific tips
-    if transport == "car":
-        tips.append("🚗 Use public transport or carpool.")
-        tips.append("🚶 Walk or cycle for short distances.")
+    transport_tips = {
+        "car": [
+            "🚗 Consider carpooling or switching to an electric vehicle.",
+            "🚶 Walk or cycle for trips shorter than 3 km.",
+        ],
+        "bike": [
+            "🏍️ Maintain your bike for better fuel efficiency.",
+            "⚡ Consider switching to an electric scooter.",
+        ],
+        "bus": [
+            "🚌 Great choice! Public transport cuts emissions significantly.",
+            "🚲 Combine bus with cycling for last-mile travel.",
+        ],
+        "train": [
+            "🚆 Rail is one of the greenest ways to travel — keep it up!",
+            "💚 Choose trains over flights wherever possible.",
+        ],
+        "flight": [
+            "✈️ Flights are high-emission. Prefer trains for shorter routes.",
+            "🌍 Consider carbon-offset programs for unavoidable flights.",
+        ],
+        "ev": [
+            "⚡ Great EV choice! Charge from renewable sources when possible.",
+            "🔋 EVs have near-zero operational emissions.",
+        ],
+    }
+    for tip in transport_tips.get(transport, []):
+        tips.append(tip)
 
-    elif transport == "bike":
-        tips.append("🏍 Maintain your bike for better fuel efficiency.")
-
-    elif transport == "bus":
-        tips.append("🚌 Public transport reduces emissions significantly.")
-
-    elif transport == "train":
-        tips.append("🚆 Train travel is eco-friendly. Keep using it.")
-
-    elif transport == "flight":
-        tips.append("✈️ Flights have high emissions. Avoid unnecessary travel.")
-        tips.append("🌍 Use train for shorter distances when possible.")
-
-    # Electricity tips
     if electricity > 400:
-        tips.append("⚡ Reduce AC usage and unplug unused devices.")
+        tips.append("⚡ High electricity use — consider installing solar panels.")
     elif electricity > 200:
-        tips.append("💡 Use LED bulbs and energy-efficient appliances.")
+        tips.append("💡 Switch to LED bulbs and energy-efficient appliances.")
+    tips.append("🔌 Unplug idle devices — standby power can waste up to 10% of energy.")
 
-    tips.append("🔌 Turn off unused lights and fans.")
+    diet_tips = {
+        "vegan": "🥦 A vegan diet has the lowest food footprint — excellent choice!",
+        "veg": "🥗 Vegetarian diet is eco-friendly. Going vegan would lower it further.",
+        "pescatarian": "🐟 Pescatarian diet is moderate. Reducing fish helps too.",
+        "nonveg": "🍗 Cutting red-meat consumption by 50% can significantly reduce food emissions.",
+    }
+    tips.append(diet_tips.get(diet, "🥗 Eating more plant-based meals reduces emissions."))
 
-    # Diet tips
-    if diet == "nonveg":
-        tips.append("🍗 Reduce meat consumption to lower emissions.")
+    if waste > 5:
+        tips.append("🗑️ Aim to cut household waste by composting and reducing single-use plastics.")
     else:
-        tips.append("🥗 Vegetarian diet is eco-friendly.")
+        tips.append("♻️ Good waste management! Try composting food scraps to do even better.")
 
-    # General tips
-    tips.append("🌍 Avoid single-use plastic and save water.")
+    if water > 150:
+        tips.append("💧 Fix leaks and use water-efficient appliances to reduce water emissions.")
+    else:
+        tips.append("🚿 Short showers save water and the energy used to heat it.")
 
-    return tips[:6]
+    tips.append("🌍 Plant a tree or support reforestation to offset your remaining footprint.")
+
+    return tips[:7]
 
 
-# 🔹 Home Route
 @app.route('/')
 def home():
     return render_template("index.html")
 
 
-# 🔹 Calculate Route (AJAX)
 @app.route('/calculate', methods=['POST'])
 def calculate():
-
     data = request.get_json()
 
-    # Inputs
-    travel = float(data['travel'])
-    electricity = float(data['electricity'])
-    transport = data['transport']
-    diet = data['diet']
+    travel = float(data.get('travel', 0))
+    electricity = float(data.get('electricity', 0))
+    transport = data.get('transport', 'car')
+    diet = data.get('diet', 'veg')
+    waste = float(data.get('waste', 0))
+    water = float(data.get('water', 0))
 
-    # 🔥 Updated Emission Factors
-    factors = {
+    # kg CO₂ per km
+    transport_factors = {
         "car": 0.21,
         "bike": 0.10,
         "bus": 0.05,
         "train": 0.04,
-        "flight": 0.15
+        "flight": 0.15,
+        "ev": 0.05,
     }
 
-    diet_factor = 3 if diet == "nonveg" else 1.5
+    # Monthly diet emission (kg CO₂)
+    diet_factors = {
+        "vegan": 1.0,
+        "veg": 1.5,
+        "pescatarian": 2.0,
+        "nonveg": 3.0,
+    }
 
-    # Calculations
-    travel_emission = travel * factors.get(transport, 0.1)
+    travel_emission = travel * transport_factors.get(transport, 0.1)
     electricity_emission = electricity * 0.82
-    diet_emission = diet_factor
+    diet_emission = diet_factors.get(diet, 1.5)
+    waste_emission = waste * 0.5          # kg CO₂ per kg waste
+    water_emission = water * 0.003        # kg CO₂ per litre
 
-    footprint = travel_emission + electricity_emission + diet_emission
+    footprint = travel_emission + electricity_emission + diet_emission + waste_emission + water_emission
 
-    # Level
     if footprint < 50:
         level = "Eco Friendly 🌱"
+        level_key = "low"
     elif footprint < 150:
         level = "Moderate ⚠️"
+        level_key = "medium"
     else:
         level = "High 🚨"
+        level_key = "high"
 
-    # Tips
-    tips = get_smart_tips(travel, electricity, transport, diet, footprint)
+    comparison_pct = round((footprint / GLOBAL_AVG_MONTHLY) * 100, 1)
+    trees_needed = max(1, round(footprint / TREE_ABSORPTION_MONTHLY))
+    annual = round(footprint * 12, 1)
 
-    # Eco Facts
+    tips = get_smart_tips(travel, electricity, transport, diet, waste, water, footprint)
+
     facts = [
-        "🌳 One tree absorbs 22kg CO₂ per year",
-        "💡 LED bulbs save 75% energy",
-        "🚌 Public transport reduces emissions by 45%",
-        "⚡ Turning off unused devices saves electricity",
-        "🚴 Cycling reduces pollution",
-        "🚆 Trains are one of the lowest-emission transport modes"
+        "🌳 One tree absorbs ~22 kg CO₂ per year",
+        "💡 LED bulbs use 75% less energy than incandescent bulbs",
+        "🚌 Public transport reduces personal emissions by up to 45%",
+        "🥦 Plant-based diets can cut food-related emissions by up to 70%",
+        "🚴 Cycling produces zero operational CO₂ emissions",
+        "🚆 Trains emit ~80% less CO₂ than flights per kilometre",
+        "☀️ Solar panels can power a home with near-zero carbon emissions",
+        "♻️ Recycling aluminium uses 95% less energy than producing new aluminium",
+        "💧 Heating water accounts for ~18% of average home energy use",
+        "🏠 Proper insulation can cut home-heating emissions by up to 30%",
     ]
 
-    eco_fact = random.choice(facts)
-
-    # 🔥 JSON Response (for frontend)
     return jsonify({
         "footprint": round(footprint, 2),
         "level": level,
+        "level_key": level_key,
         "tips": tips,
-        "fact": eco_fact,
-        "travel": travel_emission,
-        "electricity": electricity_emission,
-        "diet": diet_emission,
-        "transport": transport
+        "fact": random.choice(facts),
+        "travel": round(travel_emission, 2),
+        "electricity": round(electricity_emission, 2),
+        "diet": round(diet_emission, 2),
+        "waste": round(waste_emission, 2),
+        "water": round(water_emission, 2),
+        "transport": transport,
+        "comparison_pct": comparison_pct,
+        "trees_needed": trees_needed,
+        "annual": annual,
+        "global_avg": GLOBAL_AVG_MONTHLY,
     })
 
 
-# 🔹 Run App
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
