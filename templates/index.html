@@ -630,7 +630,7 @@ body {
         <!-- Comparison bar -->
         <div class="comparison-section">
           <div class="comparison-label">
-            <span>Your footprint vs global average (333 kg/mo)</span>
+            <span id="cmp-avg-label">Your footprint vs global average</span>
             <span id="cmp-pct-label">0%</span>
           </div>
           <div class="comparison-track">
@@ -697,6 +697,12 @@ body {
 </div><!-- /page-wrapper -->
 
 <script>
+/* ============================================================
+   CONSTANTS
+   ============================================================ */
+const MAX_TREES_SHOWN = 20;   // max tree emojis to display
+const MAX_CMP_PCT     = 200;  // comparison bar caps at 200 % of global average
+
 /* ============================================================
    THEME TOGGLE
    ============================================================ */
@@ -821,14 +827,13 @@ function clearHistory() {
 /* ============================================================
    ANIMATED COUNTER
    ============================================================ */
-function animateCount(el, target, duration = 900) {
+function animateCount(el, target, duration = 900, unitHtml = '<span class="result-unit">kg CO₂</span>') {
   const start = performance.now();
-  const unit = '<span class="result-unit">kg CO₂</span>';
   function step(now) {
     const t = Math.min((now - start) / duration, 1);
     const ease = 1 - Math.pow(1 - t, 3);
     const current = (ease * target).toFixed(2);
-    el.innerHTML = current + unit;
+    el.innerHTML = current + unitHtml;
     if (t < 1) requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
@@ -838,11 +843,10 @@ function animateCount(el, target, duration = 900) {
    TREES EMOJI WIDGET
    ============================================================ */
 function renderTrees(count) {
-  const MAX_SHOWN = 20;
   let html = '';
-  const shown = Math.min(count, MAX_SHOWN);
+  const shown = Math.min(count, MAX_TREES_SHOWN);
   for (let i = 0; i < shown; i++) html += '🌳';
-  if (count > MAX_SHOWN) html += ` <small>+${count - MAX_SHOWN} more</small>`;
+  if (count > MAX_TREES_SHOWN) html += ` <small>+${count - MAX_TREES_SHOWN} more</small>`;
   return html;
 }
 
@@ -851,8 +855,8 @@ function renderTrees(count) {
    ============================================================ */
 function updateComparisonBar(pct) {
   const fill = document.getElementById('comparison-fill');
-  const capped = Math.min(pct, 200);
-  const barPct = (capped / 200) * 100;
+  const capped = Math.min(pct, MAX_CMP_PCT);
+  const barPct = (capped / MAX_CMP_PCT) * 100;
   fill.style.width = barPct + '%';
   fill.style.background = pct <= 80
     ? 'linear-gradient(90deg,#00d4aa,#00b4d8)'
@@ -904,6 +908,7 @@ async function runCalculate() {
     document.getElementById('stat-vs-avg').textContent = d.comparison_pct + '%';
 
     // Comparison bar
+    document.getElementById('cmp-avg-label').textContent = `Your footprint vs global average (${d.global_avg} kg/mo)`;
     document.getElementById('cmp-pct-label').textContent = d.comparison_pct + '% of avg';
     updateComparisonBar(d.comparison_pct);
 

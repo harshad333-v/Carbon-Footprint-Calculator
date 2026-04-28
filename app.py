@@ -8,8 +8,8 @@ app = Flask(__name__)
 # Monthly global average CO₂ per person (~4 tonnes/year)
 GLOBAL_AVG_MONTHLY = 333.0
 
-# Trees needed: 1 tree absorbs ~22 kg CO₂/year → ~1.83 kg/month
-TREE_ABSORPTION_MONTHLY = 1.83
+# Trees needed: 1 tree absorbs ~22 kg CO₂/year → ~1.833 kg/month (rounded to 3 d.p.)
+TREE_ABSORPTION_MONTHLY = 22 / 12
 
 
 def get_smart_tips(travel, electricity, transport, diet, waste, water, footprint):
